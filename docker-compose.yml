@@ -1,0 +1,78 @@
+version: "3.4"
+services:
+  frontend:
+    container_name: graphql-gateway-example-frontend
+    command: yarn start
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app:cached
+    stdin_open: true
+    tty: true
+    depends_on:
+      - yaichi
+      - gateway
+  gateway:
+    container_name: graphql-gateway-example-gateway
+    command: yarn start
+    build:
+      context: ./gateway
+    volumes:
+      - ./gateway:/app:cached
+      - node_modules-gateway:/app/node_modules
+    stdin_open: true
+    tty: true
+    depends_on:
+      - yaichi
+      - todo-app
+      - calendar-app
+  todo-app:
+    container_name: graphql-gateway-example-todo-app
+    build:
+      context: ./todo-app
+    command:
+      - sh
+      - -c
+      - |
+        if [ -e tmp/pids/server.pid ]; then
+          rm tmp/pids/server.pid
+        fi
+        bundle exec rails s -p 3000 -b 0.0.0.0
+    volumes:
+      - ./todo-app:/app:cached
+      - vendor:/vendor
+    stdin_open: true
+    tty: true
+    depends_on:
+      - yaichi
+  calendar-app:
+    container_name: graphql-gateway-example-calendar-app
+    build:
+      context: ./calendar-app
+    command:
+      - sh
+      - -c
+      - |
+        if [ -e tmp/pids/server.pid ]; then
+          rm tmp/pids/server.pid
+        fi
+        bundle exec rails s -p 3000 -b 0.0.0.0
+    volumes:
+      - ./calendar-app:/app:cached
+      - vendor:/vendor
+    stdin_open: true
+    tty: true
+    depends_on:
+      - yaichi
+    ports:
+      - 3456:3000
+  yaichi:
+    container_name: graphql-gateway-example-yaichi
+    image: mtsmfm/yaichi:latest
+    ports:
+      - 80:3000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  vendor:
+  node_modules-gateway:
