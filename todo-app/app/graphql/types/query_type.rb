@@ -5,6 +5,8 @@ module Types
 
     field :todos, [TodoType], null: false
     def todos
+      # mark_resilience #1
+      sleep 2
       Todo.all
     end
   end

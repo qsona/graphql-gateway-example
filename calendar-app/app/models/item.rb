@@ -20,7 +20,9 @@ class Item
   end
 
   def self.todo_items
-    client = Faraday.new('http://todo-app:3000/') do |conn|
+    # mark_resilience #2
+    # client = Faraday.new('http://todo-app:3000/') do |conn|
+    client = Faraday.new('http://calendar-app-envoy:10000/todo-app') do |conn|
       conn.request :json
       conn.response :json, content_type: /\bjson$/
 
@@ -37,6 +39,14 @@ query {
     EOS
 
     response = client.post('graphql', { query: query })
+
+    unless response.success?
+      # mark_resilience #4
+      # raise "Error: #{response.status} #{response.body}"
+      puts "Error: #{response.status} #{response.body}"
+      return []
+    end
+
     response.body['data']['todos'].map { |json| new('todo', json['text'], json['date']) }
   end
 end

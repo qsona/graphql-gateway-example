@@ -64,8 +64,14 @@ services:
     tty: true
     depends_on:
       - yaichi
-    ports:
-      - 3456:3000
+      - calendar-app-envoy
+  calendar-app-envoy:
+    container_name: graphql-gateway-example-calendar-app-envoy
+    build:
+      context: ./calendar-app
+      dockerfile: Dockerfile-envoy
+    volumes:
+      - ./calendar-app/envoy:/etc/envoy
   yaichi:
     container_name: graphql-gateway-example-yaichi
     image: mtsmfm/yaichi:latest

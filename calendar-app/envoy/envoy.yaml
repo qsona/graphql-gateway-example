@@ -1,0 +1,46 @@
+admin:
+  access_log_path: /dev/stdout
+  address:
+    socket_address: { address: 127.0.0.1, port_value: 9901 }
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 10000 }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        config:
+          stat_prefix: ingress_http
+          codec_type: AUTO
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service_http
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/todo-app/" }
+                # mark_resilience #3
+                # route: { prefix_rewrite: "/", cluster: todo-app }
+                route: { prefix_rewrite: "/", cluster: todo-app, timeout: 1s }
+          http_filters:
+          - name: envoy.router
+            config: {}
+  clusters:
+  - name: todo-app
+    circuit_breakers:
+      thresholds:
+      - max_connections: 1
+        max_retries: 0
+    connect_timeout: 1s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: todo-app
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: todo-app
+                port_value: 3000
